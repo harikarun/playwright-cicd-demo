@@ -47,7 +47,7 @@ jobs:
       if: ${{ !cancelled() }}
       with:
         name: playwright-report-shard-${{ matrix.shardIndex }}
-        path: playwright-report/
+        path: blob-report/
         retention-days: 1
   
   merge-reports:
