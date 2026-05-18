@@ -49,3 +49,42 @@ jobs:
         name: playwright-report-shard-${{ matrix.shardIndex }}
         path: playwright-report/
         retention-days: 1
+  
+  merge-reports:
+    # This ensures the merge job waits until all shards finish running
+    needs: [e2e-tests]
+    runs-on: ubuntu-latest
+    if: ${{ !cancelled() }}
+
+    steps:
+    - name: Checkout Codebase
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js Environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: 'npm'
+
+    - name: Install Project Dependencies
+      run: npm ci
+
+    # Download all 3 separate shard folders from GitHub's storage network
+    - name: Download Fragmented Shard Reports
+      uses: actions/download-artifact@v4
+      with:
+        path: all-shard-reports
+        pattern: playwright-report-shard-*
+        merge-multiple: true
+
+    # Use Playwright's built-in tool to merge fragmented blobs into one HTML index
+    - name: Combine Reports into Unified HTML Report
+      run: npx playwright merge-reports --reporter=html ./all-shard-reports
+
+    # Upload the final completed, unified HTML report
+    - name: Upload Final Unified Test Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: final-unified-playwright-report
+        path: playwright-report/
+        retention-days: 7
