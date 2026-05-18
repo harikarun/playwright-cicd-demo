@@ -9,35 +9,43 @@ on:
 jobs:
   e2e-tests:
     runs-on: ubuntu-latest
+    
+    # 1. Define the multi-machine matrix layout
+    strategy:
+      fail-fast: false # If machine 1 fails, do not kill machine 2 and 3 automatically
+      matrix:
+        shardIndex: [1, 2, 3] # Clone this job for shard 1, shard 2, and shard 3
+        shardTotal: [3]       # Tell Playwright the grand total of shards available
 
     steps:
     - name: Checkout Codebase
       uses: actions/checkout@v4
 
-    - name: Initialize Node.js environment
+    - name: Setup Node.js Environment
       uses: actions/setup-node@v4
       with:
-        node-version: lts/*
-        cache: 'npm' # <-- This auto-caches ~/.npm for maximum speed
+        node-version: 18
+        cache: 'npm'
 
     - name: Install Project Dependencies
-      run: npm ci # <-- Cleaner and safer than "npm install" for pipelines
+      run: npm ci
 
-    - name: Provision Playwright Binary Browsers
+    - name: Install Playwright Browsers
       run: npx playwright install --with-deps
 
-    - name: Execute Automated Test Suite
-      # This is how we securely inject environment variables into CI
+    # 2. Run tests using Playwright's native sharding flags
+    - name: Execute Sharded Tests
       env:
         BASE_URL: https://www.saucedemo.com
         QA_USERNAME: standard_user
         QA_PASSWORD: secret_sauce
-      run: npx playwright test
+      run: npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
 
-    - name: Archive Test Execution Artifacts
+    # 3. Give each machine's report a unique name so they don't overwrite each other
+    - name: Archive Shard Test Report
       uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }} # <-- Critically ensures execution even if tests fail
+      if: ${{ !cancelled() }}
       with:
-        name: playwright-html-report
+        name: playwright-report-shard-${{ matrix.shardIndex }}
         path: playwright-report/
-        retention-days: 7
+        retention-days: 1

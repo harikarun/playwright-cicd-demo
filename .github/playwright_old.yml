@@ -1,0 +1,43 @@
+name: Playwright Enterprise Suite
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Codebase
+      uses: actions/checkout@v4
+
+    - name: Initialize Node.js environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+        cache: 'npm' # <-- This auto-caches ~/.npm for maximum speed
+
+    - name: Install Project Dependencies
+      run: npm ci # <-- Cleaner and safer than "npm install" for pipelines
+
+    - name: Provision Playwright Binary Browsers
+      run: npx playwright install --with-deps
+
+    - name: Execute Automated Test Suite
+      # This is how we securely inject environment variables into CI
+      env:
+        BASE_URL: https://www.saucedemo.com
+        QA_USERNAME: standard_user
+        QA_PASSWORD: secret_sauce
+      run: npx playwright test
+
+    - name: Archive Test Execution Artifacts
+      uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }} # <-- Critically ensures execution even if tests fail
+      with:
+        name: playwright-html-report
+        path: playwright-report/
+        retention-days: 7
