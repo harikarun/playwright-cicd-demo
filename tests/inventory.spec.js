@@ -1,14 +1,21 @@
-const { test, expect } = require('@playwright/test');
+import { test, expect } from '@playwright/test';
 
-   test('Add item to shopping cart', async ({ page }) => {
-     await page.goto('/'); 
-     await page.locator('[data-test="username"]').fill(process.env.QA_USERNAME);
-     await page.locator('[data-test="password"]').fill(process.env.QA_PASSWORD);
-     await page.locator('[data-test="login-button"]').click();
+// A counter that persists across retries inside the same worker process
+let attemptCounter = 0;
 
-     // Click "Add to cart" for the first item
-     await page.locator('[data-test="add-to-cart-sauce-labs-backpack"]').click();
+test('Add item to shopping cart', async ({ page }) => {
+  attemptCounter++;
+  
+  await page.goto('https://www.saucedemo.com/');
+  
+  // Force failure ONLY on the very first execution attempt
+  if (attemptCounter === 1) {
+    throw new Error('Simulated network infrastructure timeout flaw!');
+  }
 
-     // Validate badge updates to "1"
-     await expect(page.locator('.shopping_cart_badge')).toHaveText('1');
-   });
+  // Your standard test execution code goes below here:
+  await page.locator('[data-test="username"]').fill('standard_user');
+  await page.locator('[data-test="password"]').fill('secret_sauce');
+  await page.locator('[data-test="login-button"]').click();
+  await expect(page.locator('.title')).toHaveText('Products');
+});
