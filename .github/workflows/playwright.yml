@@ -39,7 +39,7 @@ jobs:
         BASE_URL: https://www.saucedemo.com
         QA_USERNAME: standard_user
         QA_PASSWORD: secret_sauce
-      run: npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+      run: npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }} --retries=2
 
     # 3. Give each machine's report a unique name so they don't overwrite each other
     - name: Archive Shard Test Report
