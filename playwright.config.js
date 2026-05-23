@@ -42,7 +42,7 @@ export default defineConfig({
     // baseURL: 'http://localhost:3000',
     baseURL: process.env.BASE_URL || 'https://www.saucedemo.com',
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    screenshot: 'on-first-retry',
+    screenshot: 'only-on-failure',
     video: 'on-first-retry',
     trace: 'on-first-retry',
     headless: true,
