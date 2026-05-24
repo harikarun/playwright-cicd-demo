@@ -55,7 +55,11 @@ jobs:
     needs: [e2e-tests]
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
-
+    
+    permissions:
+      pull-requests: write # Required for the bot to post/edit comments on PRs
+      contents: read       # Required to checkout code and read configuration
+    
     steps:
     - name: Checkout Codebase
       uses: actions/checkout@v4
